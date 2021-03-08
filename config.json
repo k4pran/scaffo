@@ -1,0 +1,11 @@
+{
+  "render": false,
+  "episodes": 1000,
+  "plot_frequency": 10,
+  "log_frequency": 1,
+  "video_frequency": 100,
+  "video_dir": "./output",
+  "plot_title": "Agent Score by Number of Episodes",
+  "plot_x_label": "Episodes",
+  "plot_y_label": "Score"
+}
