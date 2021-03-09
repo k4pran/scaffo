@@ -2,8 +2,7 @@ import random
 
 import gym
 
-import gym_runner
-from agent_base import AgentBase
+from agent_frame import AgentBase, gym_runner
 
 env = gym.make('FrozenLake-v0')
 

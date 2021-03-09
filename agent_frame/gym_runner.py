@@ -10,17 +10,17 @@ import seaborn as sns
 import pandas as pd
 from gym.wrappers.monitoring.video_recorder import VideoRecorder
 
-from agent_base import AgentBase
+from agent_frame.agent_base import AgentBase
 
 CONFIG_FILE_NAME = 'config.json'
-PLOT_FILE_PATH_DEFAULT = "./output/plot.png"
+PLOT_FILE_PATH_DEFAULT = "../output/plot.png"
 
 render = False
 episodes = 1000
 plot_frequency = 10
 log_frequency = 1
 video_frequency = 100
-video_dir = "./output"
+video_dir = "../output"
 plot_title = "Agent Score by Number of Episodes"
 plot_x_label = "Episode"
 plot_y_label = "Score"
@@ -109,7 +109,7 @@ def start(env, agent: AgentBase):
             video_recorder = VideoRecorder(env, video_dir + "/{}{}".format(episode, video_ext), enabled=True)
         print("Episode: {}".format(episode))
 
-        score, steps = run_episode(agent, video_recorder)
+        score, steps = run_episode(env, agent, video_recorder)
 
         scores.append(score)
         total_steps += steps
@@ -128,7 +128,7 @@ def start(env, agent: AgentBase):
     env.close()
 
 
-def run_episode(agent, video_recorder=None):
+def run_episode(env, agent, video_recorder=None):
     done = False
     state = env.reset()
     score = 0
@@ -159,7 +159,7 @@ def run_episode(agent, video_recorder=None):
 
 def init_output_dir():
     try:
-        os.makedirs("./output")
+        os.makedirs("../output")
     except OSError as exc:
         if exc.errno != errno.EEXIST:
             raise
