@@ -2,6 +2,7 @@ import argparse
 import errno
 import os
 import json
+import logging
 
 import gym
 import matplotlib.pyplot as plt
@@ -11,6 +12,10 @@ import pandas as pd
 from gym.wrappers.monitoring.video_recorder import VideoRecorder
 
 from agent_frame.agent_base import AgentBase
+
+logging.basicConfig(level=logging.INFO, format='[%(levelname)s]\t%(asctime)s\t\t %(message)s')
+LOG = logging.getLogger(__name__)
+LOG.setLevel(logging.INFO)
 
 CONFIG_FILE_NAME = 'config.json'
 PLOT_FILE_PATH_DEFAULT = "../output/plot.png"
@@ -87,7 +92,7 @@ def determine_extension(env):
         if 'ansi' in modes:
             return ".json"
         else:
-            print(
+            LOG.warning(
                 "Unable to record video due to unsupported mode. Supported modes are 'rgb_array' and 'ansi'".format(
                     env))
             return
@@ -107,7 +112,6 @@ def start(env, agent: AgentBase):
 
         if (episode % video_frequency) == 0 and video_enabled:
             video_recorder = VideoRecorder(env, video_dir + "/{}{}".format(episode, video_ext), enabled=True)
-        print("Episode: {}".format(episode))
 
         score, steps = run_episode(env, agent, video_recorder)
 
@@ -115,9 +119,9 @@ def start(env, agent: AgentBase):
         total_steps += steps
 
         if (episode + 1) % log_frequency == 0:
-            print(
-                "SCORE: {} STEPS: {} TOTAL_STEPS: {}".format(score,
-                                                             steps, total_steps))
+            LOG.info(
+                "Episode: {} SCORE: {} STEPS: {} TOTAL_STEPS: {}".format(episode, score,
+                                                                         steps, total_steps))
 
         if episode % plot_frequency == 0:
             plot([i for i in range(episode)], scores)
