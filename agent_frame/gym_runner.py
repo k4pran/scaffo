@@ -13,12 +13,8 @@ from gym.wrappers.monitoring.video_recorder import VideoRecorder
 
 from agent_frame.agent_base import AgentBase
 
-logging.basicConfig(level=logging.INFO, format='[%(levelname)s]\t%(asctime)s\t\t %(message)s')
-LOG = logging.getLogger(__name__)
-LOG.setLevel(logging.INFO)
-
 CONFIG_FILE_NAME = 'config.json'
-PLOT_FILE_PATH_DEFAULT = "../output/plot.png"
+PLOT_FILE_PATH_DEFAULT = "./output/media/plot.png"
 SCORE_LOG_FIXED_LENGTH = 7
 STEPS_LOG_FIXED_LENGTH = 5
 
@@ -27,7 +23,8 @@ episodes = 1000
 plot_frequency = 10
 log_frequency = 1
 video_frequency = 100
-video_dir = "../output"
+video_dir = "./output/media"
+log_dir = "./output/log"
 plot_title = "Agent Score by Number of Episodes"
 plot_x_label = "Episode"
 plot_y_label = "Score"
@@ -36,11 +33,12 @@ total_steps = None
 
 
 def load_config(**config):
-    global render, episodes, plot_frequency, log_frequency, video_frequency, video_dir
+    global render, episodes, plot_frequency, log_frequency, log_dir, video_frequency, video_dir
     render = config.get('render', render)
     episodes = config.get('episodes', episodes)
     plot_frequency = config.get('plot_frequency', plot_frequency)
     log_frequency = config.get('log_frequency', log_frequency)
+    log_dir = config.get('log_dir', log_dir)
     video_frequency = config.get('video_frequency', video_frequency)
     video_dir = config.get('video_dir', video_dir)
 
@@ -66,16 +64,36 @@ game_args_parser.add_argument('--plot_y_label', '--py', type=str,
                               help="Sets label for plot's y-axis")
 game_args_parser.add_argument('--log_frequency', '--lf', type=int,
                               help="Sets logging frequency, set to 0 to disable. Will log progress every n episodes")
+game_args_parser.add_argument('--log_dir', '--ld', type=str,
+                              help="Sets destination directory to save logs to")
 game_args_parser.add_argument('--video_frequency', '--vf', type=int,
                               help="Video recording frequency, records every n episodes")
 game_args_parser.add_argument('--video_dir', '--vd', type=str,
-                              help="Sets destination directory to save video recordings too")
+                              help="Sets destination directory to save video recordings to")
 
 game_args = game_args_parser.parse_known_args()[0]
 overrides = {k: v for k, v in vars(game_args_parser.parse_known_args()[0]).items() if v is not None
              and not (type(v) is bool and not v)}
 
 load_config(**overrides)
+
+if not os.path.exists(video_dir):
+    os.makedirs(video_dir)
+
+if not os.path.exists(log_dir):
+    os.makedirs(log_dir)
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(levelname)s]\t%(asctime)s\t\t %(message)s',
+    handlers=[
+        logging.FileHandler(log_dir + "/log.txt"),
+        logging.StreamHandler()
+    ]
+)
+
+LOG = logging.getLogger(__name__)
+LOG.setLevel(logging.INFO)
 
 
 def plot(episodes, scores):
