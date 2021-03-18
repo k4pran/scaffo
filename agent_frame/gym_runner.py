@@ -19,6 +19,8 @@ LOG.setLevel(logging.INFO)
 
 CONFIG_FILE_NAME = 'config.json'
 PLOT_FILE_PATH_DEFAULT = "../output/plot.png"
+SCORE_LOG_FIXED_LENGTH = 7
+STEPS_LOG_FIXED_LENGTH = 5
 
 render = False
 episodes = 1000
@@ -29,6 +31,8 @@ video_dir = "../output"
 plot_title = "Agent Score by Number of Episodes"
 plot_x_label = "Episode"
 plot_y_label = "Score"
+
+total_steps = None
 
 
 def load_config(**config):
@@ -99,6 +103,23 @@ def determine_extension(env):
     return ".mp4"
 
 
+def format_as_fixed_length(value, fixed_length):
+    value = str(value)
+    return value + (fixed_length - len(value)) * " "
+
+
+def log_step_summary(episodes, current_episode, score, steps):
+    global total_steps
+
+    current_episode = format_as_fixed_length(current_episode, len(str(episodes)))
+    score = format_as_fixed_length(score, SCORE_LOG_FIXED_LENGTH)
+    steps = format_as_fixed_length(steps, STEPS_LOG_FIXED_LENGTH)
+
+    LOG.info(
+        "Episode: {} SCORE: {} EPISODE STEPS: {} TOTAL_STEPS: {}".format(current_episode, score,
+                                                                         steps, total_steps))
+
+
 def start(env, agent: AgentBase):
     global video_recorder
     scores = []
@@ -119,9 +140,7 @@ def start(env, agent: AgentBase):
         total_steps += steps
 
         if (episode + 1) % log_frequency == 0:
-            LOG.info(
-                "Episode: {} SCORE: {} STEPS: {} TOTAL_STEPS: {}".format(episode, score,
-                                                                         steps, total_steps))
+            log_step_summary(episodes, episode, score, steps)
 
         if episode % plot_frequency == 0:
             plot([i for i in range(episode)], scores)
@@ -133,12 +152,18 @@ def start(env, agent: AgentBase):
 
 
 def run_episode(env, agent, video_recorder=None):
+    global total_steps, render
+
     done = False
     state = env.reset()
     score = 0
-    steps = 1
+    steps = 0
     while not done:
-        agent.before()
+        agent.before(recording=video_recorder is not None,
+                     rendering=render,
+                     state=state,
+                     total_steps=total_steps,
+                     current_steps=steps)
 
         action = agent.act(state)
         next_state, reward, done, info = env.step(action)
@@ -156,7 +181,18 @@ def run_episode(env, agent, video_recorder=None):
         score += reward
 
         steps += 1
-        agent.after()
+        total_steps += 1
+
+        agent.after(recording=video_recorder is not None,
+                    rendering=render,
+                    state=state,
+                    next_state=next_state,
+                    reward=reward,
+                    total_steps=total_steps,
+                    current_steps=steps,
+                    done=done,
+                    score=score,
+                    info=info)
 
     return score, steps
 
@@ -178,6 +214,9 @@ def resolve_env(gym_env):
 
 
 def run(gym_env, agent: AgentBase):
+    global total_steps
+
+    total_steps = 0
     init_output_dir()
     env = resolve_env(gym_env)
     start(env, agent)
