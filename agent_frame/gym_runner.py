@@ -3,6 +3,7 @@ import errno
 import os
 import json
 import logging
+from time import sleep
 
 import gym
 import matplotlib.pyplot as plt
@@ -204,9 +205,12 @@ def run_episode(env, agent, video_recorder=None):
         state = next_state
 
         if video_recorder:
+            sleep(0.08)
             env.render()
-            video_recorder.capture_frame()
+            for i in range(6):
+                video_recorder.capture_frame()
         elif render:
+            sleep(0.08)
             env.render()
 
         total_score += reward

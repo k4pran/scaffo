@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='agent-frame',
-    version='0.2.5',
+    version='0.2.6',
     packages=['agent_frame'],
     url='http://www.ryanjames.io',
     license='',
