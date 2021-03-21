@@ -15,13 +15,15 @@ from agent_frame.agent_base import AgentBase
 
 CONFIG_FILE_NAME = 'config.json'
 PLOT_FILE_PATH_DEFAULT = "./output/media/plot.png"
-SCORE_LOG_FIXED_LENGTH = 7
+EPISODE_SCORE_LOG_FIXED_LENGTH = 7
+STEP_SCORE_LOG_FIXED_LENGTH = 6
 STEPS_LOG_FIXED_LENGTH = 5
 
 render = False
 episodes = 1000
 plot_frequency = 10
-log_frequency = 1
+episode_log_frequency = 1
+step_log_frequency = 1
 video_frequency = 100
 video_dir = "./output/media"
 log_dir = "./output/log"
@@ -32,15 +34,17 @@ plot_y_label = "Score"
 total_steps = None
 
 
-def load_config(**config):
-    global render, episodes, plot_frequency, log_frequency, log_dir, video_frequency, video_dir
-    render = config.get('render', render)
-    episodes = config.get('episodes', episodes)
-    plot_frequency = config.get('plot_frequency', plot_frequency)
-    log_frequency = config.get('log_frequency', log_frequency)
-    log_dir = config.get('log_dir', log_dir)
-    video_frequency = config.get('video_frequency', video_frequency)
-    video_dir = config.get('video_dir', video_dir)
+def load_config(**config_overrides):
+    global render, episodes, plot_frequency, episode_log_frequency, \
+        step_log_frequency, log_dir, video_frequency, video_dir
+    render = config_overrides.get('render', render)
+    episodes = config_overrides.get('episodes', episodes)
+    plot_frequency = config_overrides.get('plot_frequency', plot_frequency)
+    episode_log_frequency = config_overrides.get('episode_log_frequency', episode_log_frequency)
+    step_log_frequency = config_overrides.get('step_log_frequency', step_log_frequency)
+    log_dir = config_overrides.get('log_dir', log_dir)
+    video_frequency = config_overrides.get('video_frequency', video_frequency)
+    video_dir = config_overrides.get('video_dir', video_dir)
 
 
 if os.path.isfile(CONFIG_FILE_NAME):
@@ -62,8 +66,10 @@ game_args_parser.add_argument('--plot_x_label', '--px', type=str,
                               help="Sets label for plot's x-axis")
 game_args_parser.add_argument('--plot_y_label', '--py', type=str,
                               help="Sets label for plot's y-axis")
-game_args_parser.add_argument('--log_frequency', '--lf', type=int,
-                              help="Sets logging frequency, set to 0 to disable. Will log progress every n episodes")
+game_args_parser.add_argument('--episode_log_frequency', '--ef', type=int,
+                              help="Sets episode logging frequency, set to 0 to disable. Will log progress every n episodes")
+game_args_parser.add_argument('--step_log_frequency', '--sf', type=int,
+                              help="Sets step logging frequency, set to 0 to disable. Will log progress every n steps")
 game_args_parser.add_argument('--log_dir', '--ld', type=str,
                               help="Sets destination directory to save logs to")
 game_args_parser.add_argument('--video_frequency', '--vf', type=int,
@@ -126,16 +132,23 @@ def format_as_fixed_length(value, fixed_length):
     return value + (fixed_length - len(value)) * " "
 
 
-def log_step_summary(episodes, current_episode, score, steps):
+def log_episode_summary(episodes, current_episode, score, steps):
     global total_steps
 
     current_episode = format_as_fixed_length(current_episode, len(str(episodes)))
-    score = format_as_fixed_length(score, SCORE_LOG_FIXED_LENGTH)
+    score = format_as_fixed_length(score, EPISODE_SCORE_LOG_FIXED_LENGTH)
     steps = format_as_fixed_length(steps, STEPS_LOG_FIXED_LENGTH)
 
     LOG.info(
-        "Episode: {} SCORE: {} EPISODE STEPS: {} TOTAL_STEPS: {}".format(current_episode, score,
-                                                                         steps, total_steps))
+        "EPISODE: %s EPISODE STEPS %s SCORE: %s TOTAL_STEPS: %s", current_episode, steps,
+        score, total_steps)
+
+
+def log_step_summary(step, total_score, reward):
+    # +3 to account for difference between word lengths of 'EPISODE' and 'STEP'
+    step = format_as_fixed_length(step, len(str(episodes)) + 3)
+    total_score = format_as_fixed_length(total_score, STEP_SCORE_LOG_FIXED_LENGTH)
+    LOG.info("STEP: %s TOTAL_SCORE: %s REWARD: %s", step, total_score, reward)
 
 
 def start(env, agent: AgentBase):
@@ -157,8 +170,8 @@ def start(env, agent: AgentBase):
         scores.append(score)
         total_steps += steps
 
-        if (episode + 1) % log_frequency == 0:
-            log_step_summary(episodes, episode, score, steps)
+        if episode_log_frequency > 0 and (episode + 1) % episode_log_frequency == 0:
+            log_episode_summary(episodes, episode, score, steps)
 
         if episode % plot_frequency == 0:
             plot([i for i in range(episode)], scores)
@@ -174,7 +187,7 @@ def run_episode(env, agent, video_recorder=None):
 
     done = False
     state = env.reset()
-    score = 0
+    total_score = 0
     steps = 0
     while not done:
         agent.before(recording=video_recorder is not None,
@@ -196,7 +209,7 @@ def run_episode(env, agent, video_recorder=None):
         elif render:
             env.render()
 
-        score += reward
+        total_score += reward
 
         steps += 1
         total_steps += 1
@@ -209,10 +222,13 @@ def run_episode(env, agent, video_recorder=None):
                     total_steps=total_steps,
                     current_steps=steps,
                     done=done,
-                    score=score,
+                    score=total_score,
                     info=info)
 
-    return score, steps
+        if step_log_frequency > 0 and (steps + 1) % step_log_frequency == 0:
+            log_step_summary(steps, total_score, reward)
+
+    return total_score, steps
 
 
 def init_output_dir():
