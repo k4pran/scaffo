@@ -49,7 +49,7 @@ def load_config(**config_overrides):
 
 
 if os.path.isfile(CONFIG_FILE_NAME):
-    with open('config.json', 'r') as config:
+    with open(CONFIG_FILE_NAME, 'r') as config:
         load_config(**json.load(config))
 
 master_parser = argparse.ArgumentParser().add_subparsers()
@@ -229,7 +229,7 @@ def run_episode(env, agent, video_recorder=None):
                     score=total_score,
                     info=info)
 
-        if step_log_frequency > 0 and (steps + 1) % step_log_frequency == 0:
+        if step_log_frequency > 0 and steps % step_log_frequency == 0:
             log_step_summary(steps, total_score, reward)
 
     return total_score, steps
