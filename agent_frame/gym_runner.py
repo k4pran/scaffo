@@ -180,7 +180,6 @@ def start(env, agent: AgentBase):
         if video_recorder:
             video_recorder.close()
             video_recorder = None
-    env.close()
 
 
 def run_episode(env, agent, video_recorder=None):
