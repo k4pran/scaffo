@@ -3,8 +3,7 @@ import errno
 import os
 import json
 import logging
-from time import sleep
-
+import time
 import gym
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
@@ -133,7 +132,7 @@ def format_as_fixed_length(value, fixed_length):
     return value + (fixed_length - len(value)) * " "
 
 
-def log_episode_summary(episodes, current_episode, score, steps):
+def log_episode_summary(episodes, current_episode, score, steps, episode_elapsed_time_ms, total_elapsed_time_ms):
     global total_steps
 
     current_episode = format_as_fixed_length(current_episode, len(str(episodes)))
@@ -141,8 +140,9 @@ def log_episode_summary(episodes, current_episode, score, steps):
     steps = format_as_fixed_length(steps, STEPS_LOG_FIXED_LENGTH)
 
     LOG.info(
-        "EPISODE: %s EPISODE STEPS %s SCORE: %s TOTAL_STEPS: %s", current_episode, steps,
-        score, total_steps)
+        "EPISODE: %s EPISODE STEPS %s SCORE: %s TOTAL_STEPS: %s \t EPISODE_ELAPSED_TIME: %fs TOTAL_ELAPSED_TIME: %fs",
+        current_episode, steps,
+        score, total_steps, episode_elapsed_time_ms, total_elapsed_time_ms)
 
 
 def log_step_summary(step, total_score, reward):
@@ -161,10 +161,13 @@ def start(env, agent: AgentBase):
     video_ext = determine_extension(env)
     if not video_ext:
         video_enabled = False
-    for episode in range(1, episodes):
 
-        if (episode % video_frequency) == 0 and video_enabled:
-            video_recorder = VideoRecorder(env, video_dir + "/{}{}".format(episode, video_ext), enabled=True)
+    total_start_time = time.time()
+    for episode in range(1, episodes):
+        episode_start_time = time.time()
+
+        if (episode % video_frequency) == 0:
+            video_recorder = VideoRecorder(env, video_dir + "/{}{}".format(episode, video_ext), enabled=video_enabled)
 
         score, steps = run_episode(env, agent, video_recorder)
 
@@ -172,7 +175,8 @@ def start(env, agent: AgentBase):
         total_steps += steps
 
         if episode_log_frequency > 0 and (episode + 1) % episode_log_frequency == 0:
-            log_episode_summary(episodes, episode, score, steps)
+            log_episode_summary(episodes, episode, score, steps, time.time() - episode_start_time,
+                                time.time() - total_start_time)
 
         if episode % plot_frequency == 0:
             plot([i for i in range(episode)], scores)
@@ -204,12 +208,11 @@ def run_episode(env, agent, video_recorder=None):
         state = next_state
 
         if video_recorder:
-            sleep(0.08)
-            env.render()
+            time.sleep(0.08)
             for i in range(6):
                 video_recorder.capture_frame()
         elif render:
-            sleep(0.08)
+            time.sleep(0.08)
             env.render()
 
         total_score += reward
