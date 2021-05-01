@@ -5,6 +5,7 @@ import json
 import logging
 import time
 import gym
+import matplotlib
 import matplotlib.pyplot as plt
 from matplotlib.ticker import MaxNLocator
 import seaborn as sns
@@ -100,6 +101,12 @@ logging.basicConfig(
 
 LOG = logging.getLogger(__name__)
 LOG.setLevel(logging.INFO)
+
+try:
+    matplotlib.use("Qt4agg")
+except ImportError:
+    LOG.warning("No qt bindings found, it will still run, however it is advised to run 'pip install PyQt5' "
+                "to install qt bindings to avoid popups during plotting")
 
 
 def plot(episodes, scores):
