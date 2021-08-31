@@ -12,7 +12,7 @@ import seaborn as sns
 import pandas as pd
 from gym.wrappers.monitoring.video_recorder import VideoRecorder
 
-from agent_frame.agent_base import AgentBase
+from scaffo.agent_base import AgentBase
 
 CONFIG_FILE_NAME = 'config.json'
 PLOT_FILE_PATH_DEFAULT = "./output/media/plot.png"

@@ -1,9 +1,9 @@
 import setuptools
 
 setuptools.setup(
-    name='agent-frame',
+    name='scaffo',
     version='0.3.0',
-    packages=['agent_frame'],
+    packages=['scaffo'],
     url='http://www.ryanjames.io',
     license='',
     author='Ryan McCauley',

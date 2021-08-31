@@ -2,7 +2,7 @@ import random
 
 import gym
 
-from agent_frame import AgentBase, gym_runner
+from scaffo import AgentBase, gym_runner
 
 env = gym.make('FrozenLake-v0')
 
