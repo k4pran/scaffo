@@ -13,6 +13,7 @@ class AgentBase(ABC):
     PYTORCH_PLATFORM = '/pytorch'
     KERAS_PLATFORM = '/keras'
     FILENAME = "checkpoint"
+    SEPARATOR = "-"
 
     def __init__(self, *args, **kwargs):
         self.checkpoint_dir = "./output/checkpoints"
@@ -50,16 +51,16 @@ class AgentBase(ABC):
     def save_pytorch_model(self, model: Module, identifier, *tags):
         save_dir = build_checkpoint_path(AgentBase.CHECKPOINT_DIR_NAME, AgentBase.PYTORCH_PLATFORM, identifier, *tags)
         self.init_dir(save_dir)
-        save_path = save_dir + AgentBase.FILENAME + str(self.get_next_index(save_dir))
+        save_path = os.path.join(save_dir,
+                                 (AgentBase.FILENAME + AgentBase.SEPARATOR + str(self.get_next_index(save_dir))))
         torch.save(model.state_dict(), save_path)
 
     def load_pytorch_model(self, model: Module, identifier, *tags, checkpoint_number=None):
         load_dir = build_checkpoint_path(AgentBase.CHECKPOINT_DIR_NAME, AgentBase.PYTORCH_PLATFORM, identifier, *tags)
         if not checkpoint_number:
             checkpoint_number = self.get_next_index(load_dir)
-        load_path = load_dir + AgentBase.FILENAME + str(checkpoint_number)
+        load_path = os.path.join(load_dir, (AgentBase.FILENAME + AgentBase.SEPARATOR + str(checkpoint_number)))
         model.load_state_dict(torch.load(load_path))
 
     def save_keras_model(self):
         pass
-

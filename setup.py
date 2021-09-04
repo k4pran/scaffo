@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name='scaffo',
-    version='0.3.0',
+    version='0.0.2',
     packages=['scaffo'],
     url='http://www.ryanjames.io',
     license='',

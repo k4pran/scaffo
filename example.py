@@ -11,8 +11,8 @@ action_space = env.action_space
 
 class Agent(AgentBase):
 
-    def __init__(self):
-        pass
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
     def before(self, *args, **kwargs):
         pass
