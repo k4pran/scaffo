@@ -1,7 +1,19 @@
+import logging
 import os
 import torch
 from torch.nn.modules import Module
 from abc import ABC, abstractmethod
+
+logging.basicConfig(
+    level=logging.INFO,
+    format='[%(levelname)s]\t%(asctime)s\t\t %(message)s',
+    handlers=[
+        logging.StreamHandler()
+    ]
+)
+
+LOG = logging.getLogger(__name__)
+LOG.setLevel(logging.INFO)
 
 
 def build_checkpoint_path(root, platform, name, *tags):
@@ -53,6 +65,7 @@ class AgentBase(ABC):
         self.init_dir(save_dir)
         save_path = os.path.join(save_dir,
                                  (AgentBase.FILENAME + AgentBase.SEPARATOR + str(self.get_next_index(save_dir))))
+        LOG.info("Saving pytorch model at " + save_path)
         torch.save(model.state_dict(), save_path)
 
     def load_pytorch_model(self, model: Module, identifier, *tags, checkpoint_number=None):
@@ -60,6 +73,7 @@ class AgentBase(ABC):
         if not checkpoint_number:
             checkpoint_number = self.get_next_index(load_dir)
         load_path = os.path.join(load_dir, (AgentBase.FILENAME + AgentBase.SEPARATOR + str(checkpoint_number)))
+        LOG.info("Loading pytorch model at " + load_path)
         model.load_state_dict(torch.load(load_path))
 
     def save_keras_model(self):
